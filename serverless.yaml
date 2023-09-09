@@ -1,0 +1,38 @@
+service: hugging-face-sagemaker
+frameworkVersion: '3'
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: python3.10
+  timeout: 30
+  memorySize: 2048
+  environment:
+    SAGEMAKER_DEPLOYED_ENDPOINT: ${env:SAGEMAKER_DEPLOYED_ENDPOINT}
+  iam: 
+    role:
+      statements: 
+        - Effect: 'Allow'
+          Action: 'sagemaker:*'
+          Resource: '*'
+
+
+custom:
+  pythonRequirements:
+    # aws lambda has an after-extraction size limit - with native dependencies we pass the limit quickly
+    # zip the requirements and extract them on the fly (see handler.py)
+    zip: true
+    dockerizePip: true
+    useDownloadCache: false
+    useStaticCache: false
+
+functions:
+  api:
+    handler: api_app.handler
+    events:
+    - httpApi: '*'
+
+plugins:
+  - serverless-python-requirements
+  - serverless-dotenv-plugin
